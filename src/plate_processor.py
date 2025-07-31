@@ -256,6 +256,159 @@ def adaptive_threshold_plate(enhanced_plate):
     return thresh_adaptive, thresh_otsu
 
 
+def find_contours_in_plate(thresh_plate):
+
+    """번호판에서 윤곽선 검출"""
+
+    
+
+    # 윤곽선 검출
+
+    contours, hierarchy = cv2.findContours(
+
+        thresh_plate,                    # 이진화된 번호판 이미지
+
+        mode=cv2.RETR_EXTERNAL,         # 가장 바깥쪽 윤곽선만 검출
+
+        method=cv2.CHAIN_APPROX_SIMPLE  # 윤곽선 단순화
+
+    )
+
+    
+
+    # 결과 시각화용 이미지 생성 (컬러)
+
+    height, width = thresh_plate.shape
+
+    contour_image = cv2.cvtColor(thresh_plate, cv2.COLOR_GRAY2BGR)
+
+    
+
+    # 모든 윤곽선을 다른 색으로 그리기
+
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), 
+
+              (255, 0, 255), (0, 255, 255), (128, 0, 128), (255, 165, 0)]
+
+    
+
+    for i, contour in enumerate(contours):
+
+        color = colors[i % len(colors)]  # 색상 순환
+
+        cv2.drawContours(contour_image, [contour], -1, color, 2)
+
+        
+
+        # 윤곽선 번호 표시
+
+        M = cv2.moments(contour)
+
+        if M["m00"] != 0:
+
+            cx = int(M["m10"] / M["m00"])
+
+            cy = int(M["m01"] / M["m00"])
+
+            cv2.putText(contour_image, str(i+1), (cx-5, cy+5), 
+
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+
+    
+
+    # 결과 시각화
+
+    plt.figure(figsize=(15, 5))
+
+    
+
+    plt.subplot(1, 3, 1)
+
+    plt.imshow(thresh_plate, cmap='gray')
+
+    plt.title('Binary Plate')
+
+    plt.axis('off')
+
+    
+
+    plt.subplot(1, 3, 2)
+
+    plt.imshow(contour_image)
+
+    plt.title(f'Contours Detected: {len(contours)}')
+
+    plt.axis('off')
+
+    
+
+    # 윤곽선 정보 표시
+
+    plt.subplot(1, 3, 3)
+
+    contour_info = np.zeros((height, width, 3), dtype=np.uint8)
+
+    
+
+    for i, contour in enumerate(contours):
+
+        area = cv2.contourArea(contour)
+
+        x, y, w, h = cv2.boundingRect(contour)
+
+        
+
+        # 경계 사각형 그리기
+
+        cv2.rectangle(contour_info, (x, y), (x+w, y+h), colors[i % len(colors)], 1)
+
+        
+
+        # 면적 정보 표시 (작은 글씨로)
+
+        cv2.putText(contour_info, f'A:{int(area)}', (x, y-2), 
+
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255), 1)
+
+    
+
+    plt.imshow(contour_info)
+
+    plt.title('Bounding Rectangles')
+
+    plt.axis('off')
+
+    
+
+    plt.tight_layout()
+
+    plt.show()
+
+    
+
+    # 윤곽선 정보 출력
+
+    print("=== 윤곽선 검출 결과 ===")
+
+    print(f"총 윤곽선 개수: {len(contours)}")
+
+    
+
+    for i, contour in enumerate(contours):
+
+        area = cv2.contourArea(contour)
+
+        x, y, w, h = cv2.boundingRect(contour)
+
+        aspect_ratio = w / h if h > 0 else 0
+
+        print(f"윤곽선 {i+1}: 면적={area:.0f}, 크기=({w}×{h}), 비율={aspect_ratio:.2f}")
+
+    
+
+    return contours, contour_image
+
+
 def compare_contour_modes(thresh_plate):
 
     """다양한 윤곽선 검출 모드 비교"""
@@ -352,6 +505,161 @@ def prepare_for_next_step(contours, thresh_plate):
     
 
     return potential_chars
+
+
+def save_processed_results(plate_name, gray_plate, enhanced_plate, thresh_plate, contour_result):
+
+    """처리된 번호판 이미지들을 체계적으로 저장"""
+
+    
+
+    # 저장 폴더 생성
+
+    save_dir = '../processed_plates'
+
+    if not os.path.exists(save_dir):
+
+        os.makedirs(save_dir)
+
+    
+
+    # 각 단계별 결과 저장
+
+    cv2.imwrite(f'{save_dir}/{plate_name}_1_gray.png', gray_plate)
+
+    cv2.imwrite(f'{save_dir}/{plate_name}_2_enhanced.png', enhanced_plate)  
+
+    cv2.imwrite(f'{save_dir}/{plate_name}_3_threshold.png', thresh_plate)
+
+    cv2.imwrite(f'{save_dir}/{plate_name}_4_contours.png', contour_result)
+
+    
+
+    print(f"처리 결과 저장 완료: {save_dir}/{plate_name}_*.png")
+
+def process_extracted_plate(plate_name):
+
+    """추출된 번호판의 완전한 처리 파이프라인"""
+
+    
+
+    print(f"=== {plate_name} 처리 시작 ===")
+
+    
+
+    # 1단계: 이미지 로드
+
+    plate_img = load_extracted_plate(plate_name)
+
+    if plate_img is None:
+
+        return None
+
+    
+
+    # 2단계: 그레이스케일 변환
+
+    gray_plate = convert_to_grayscale(plate_img)
+
+    
+
+    # 3단계: 대비 최대화
+
+    enhanced_plate = maximize_contrast(gray_plate)
+
+    
+
+    # 4단계: 적응형 임계처리
+
+    thresh_plate, _ = adaptive_threshold_plate(enhanced_plate)
+
+    
+
+    # 5단계: 윤곽선 검출
+
+    contours, contour_result = find_contours_in_plate(thresh_plate)
+
+    
+
+    # 6단계: 결과 저장
+
+    save_processed_results(plate_name, gray_plate, enhanced_plate, thresh_plate, contour_result)
+
+    
+
+    # 7단계: 처리 결과 요약
+
+    potential_chars = prepare_for_next_step(contours, thresh_plate)
+
+    print(f"처리 완료 - 검출된 윤곽선: {len(contours)}개, 잠재적 글자: {potential_chars}개")
+
+    
+
+    return {
+
+        'original': plate_img,
+
+        'gray': gray_plate, 
+
+        'enhanced': enhanced_plate,
+
+        'threshold': thresh_plate,
+
+        'contours': len(contours),
+
+        'potential_chars': potential_chars,
+
+        'contour_result': contour_result
+
+    }
+
+# 배치 처리
+
+def batch_process_plates():
+
+    """extracted_plates 폴더의 모든 번호판 처리"""
+
+    
+
+    plate_dir = '../extracted_plates'
+
+    if not os.path.exists(plate_dir):
+
+        print(f"폴더를 찾을 수 없습니다: {plate_dir}")
+
+        return {}
+
+        
+
+    plate_files = [f for f in os.listdir(plate_dir) if f.endswith('.png')]
+
+    
+
+    if len(plate_files) == 0:
+
+        print("처리할 번호판 이미지가 없습니다.")
+
+        return {}
+
+    
+
+    results = {}
+
+    for plate_file in plate_files:
+
+        plate_name = plate_file.replace('.png', '')
+
+        result = process_extracted_plate(plate_name)
+
+        if result:
+
+            results[plate_name] = result
+
+    
+
+    print(f"\n=== 전체 처리 완료: {len(results)}개 번호판 ===")
+
+    return results
 
 plate_img = load_extracted_plate('plate_01')  # plate_01.png 로드
 

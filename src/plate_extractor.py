@@ -28,3 +28,12 @@ def onMouse(event, x, y, flags, param):  #마우스 이벤트 콜백 함수 구�
 
             # 변환 전 4개 좌표 
             pts1 = np.float32([topLeft, topRight, bottomRight , bottomLeft])
+            
+            # 변환 이미지 프레임 크기 초기화
+            width = 300
+            height = 150
+            # 변환 후 4개 좌표
+            pts2 = np.float32([[0,0], [width-1,0], 
+                                [width-1,height-1], [0,height-1]])
+            
+            

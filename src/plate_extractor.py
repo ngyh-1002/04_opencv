@@ -36,4 +36,10 @@ def onMouse(event, x, y, flags, param):  #마우스 이벤트 콜백 함수 구�
             pts2 = np.float32([[0,0], [width-1,0], 
                                 [width-1,height-1], [0,height-1]])
             
+            # 변환 행렬 계산 
+            mtrx = cv2.getPerspectiveTransform(pts1, pts2)
+            # 원근 변환 적용
+            result = cv2.warpPerspective(img, mtrx, (width, height))
+            cv2.imshow('scanned', result)
+            
             

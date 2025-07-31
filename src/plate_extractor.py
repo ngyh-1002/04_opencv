@@ -5,7 +5,7 @@ import os
 
 
 win_name = "License Plate Extractor"
-img = cv2.imread("../img/car_02.jpg")
+img = cv2.imread("../img/car_05.jpg")
 rows, cols = img.shape[:2]
 draw = img.copy()
 pts_cnt = 0

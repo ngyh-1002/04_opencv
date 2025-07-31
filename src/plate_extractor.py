@@ -42,4 +42,7 @@ def onMouse(event, x, y, flags, param):  #마우스 이벤트 콜백 함수 구�
             result = cv2.warpPerspective(img, mtrx, (width, height))
             cv2.imshow('scanned', result)
             
-            
+cv2.imshow(win_name, img)
+cv2.setMouseCallback(win_name, onMouse)    # 마우스 콜백 함수를 GUI 윈도우에 등록 ---④
+cv2.waitKey(0)
+cv2.destroyAllWindows()         

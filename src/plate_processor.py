@@ -675,6 +675,6 @@ if plate_img is not None:
     compare_contour_modes(thresh_otsu)
     prepare_for_next_step(contours, thresh_adaptive)
     save_processed_results('plate_01', gray_plate, enhanced_plate, thresh_adaptive, contour_result)
-    '''
     process_extracted_plate('plate_01')
+    '''
     batch_process_plates()

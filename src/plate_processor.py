@@ -664,11 +664,17 @@ def batch_process_plates():
 plate_img = load_extracted_plate('plate_01')  # plate_01.png 로드
 
 if plate_img is not None:
-
+    '''
     gray_plate = convert_to_grayscale(plate_img)
 
     enhanced_plate = maximize_contrast(gray_plate)
 
     thresh_adaptive, thresh_otsu = adaptive_threshold_plate(enhanced_plate)
+    contours, contour_result = find_contours_in_plate(thresh_adaptive)
     compare_contour_modes(thresh_adaptive)
     compare_contour_modes(thresh_otsu)
+    prepare_for_next_step(contours, thresh_adaptive)
+    save_processed_results('plate_01', gray_plate, enhanced_plate, thresh_adaptive, contour_result)
+    '''
+    process_extracted_plate('plate_01')
+    batch_process_plates()

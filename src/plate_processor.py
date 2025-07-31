@@ -71,11 +71,103 @@ def convert_to_grayscale(plate_img):
     
 
     return gray_plate
+def maximize_contrast(gray_plate):
 
-# 사용 예시
+    """번호판의 글자 대비 최대화"""
+
+    
+
+    # 모폴로지 연산용 구조화 요소 (번호판용으로 작게 설정)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))  # 3x3 → 2x2로 축소
+
+    
+
+    # Top Hat: 밝은 세부사항 (흰 배경) 강조
+
+    tophat = cv2.morphologyEx(gray_plate, cv2.MORPH_TOPHAT, kernel)
+
+    
+
+    # Black Hat: 어두운 세부사항 (검은 글자) 강조  
+
+    blackhat = cv2.morphologyEx(gray_plate, cv2.MORPH_BLACKHAT, kernel)
+
+    
+
+    # 대비 향상 적용
+
+    enhanced = cv2.add(gray_plate, tophat)
+
+    enhanced = cv2.subtract(enhanced, blackhat)
+
+    
+
+    # 추가: 히스토그램 균등화로 대비 더욱 향상
+
+    enhanced = cv2.equalizeHist(enhanced)
+
+    
+
+    # 결과 비교
+
+    plt.figure(figsize=(15, 4))
+
+    
+
+    plt.subplot(1, 4, 1)
+
+    plt.imshow(gray_plate, cmap='gray')
+
+    plt.title('Original Gray')
+
+    plt.axis('off')
+
+    
+
+    plt.subplot(1, 4, 2)
+
+    plt.imshow(tophat, cmap='gray')
+
+    plt.title('Top Hat')
+
+    plt.axis('off')
+
+    
+
+    plt.subplot(1, 4, 3)
+
+    plt.imshow(blackhat, cmap='gray')
+
+    plt.title('Black Hat')
+
+    plt.axis('off')
+
+    
+
+    plt.subplot(1, 4, 4)
+
+    plt.imshow(enhanced, cmap='gray')
+
+    plt.title('Enhanced Contrast')
+
+    plt.axis('off')
+
+    
+
+    plt.tight_layout()
+
+    plt.show()
+
+    
+
+    return enhanced
+
 
 plate_img = load_extracted_plate('plate_01')  # plate_01.png 로드
 
 if plate_img is not None:
 
     gray_plate = convert_to_grayscale(plate_img)
+
+    enhanced_plate = maximize_contrast(gray_plate)

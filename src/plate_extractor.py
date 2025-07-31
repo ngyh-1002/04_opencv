@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 win_name = "License Plate Extractor"
-img = cv2.imread("../img/20모5468-3.jpg")
+img = cv2.imread("../img/car_01.jpg")
 rows, cols = img.shape[:2]
 draw = img.copy()
 pts_cnt = 0

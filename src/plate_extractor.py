@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-win_name = "scanning"
+win_name = "License Plate Extractor"
 img = cv2.imread("../img/20모5468-3.jpg")
 rows, cols = img.shape[:2]
 draw = img.copy()
@@ -16,4 +16,15 @@ def onMouse(event, x, y, flags, param):  #마우스 이벤트 콜백 함수 구�
 
         pts[pts_cnt] = [x,y]            # 마우스 좌표 저장
         pts_cnt+=1
-        
+        if pts_cnt == 4:                       # 좌표가 4개 수집됨 
+            # 좌표 4개 중 상하좌우 찾기 ---② 
+            sm = pts.sum(axis=1)                 # 4쌍의 좌표 각각 x+y 계산
+            diff = np.diff(pts, axis = 1)       # 4쌍의 좌표 각각 x-y 계산
+
+            topLeft = pts[np.argmin(sm)]         # x+y가 가장 값이 좌상단 좌표
+            bottomRight = pts[np.argmax(sm)]     # x+y가 가장 큰 값이 우하단 좌표
+            topRight = pts[np.argmin(diff)]     # x-y가 가장 작은 것이 우상단 좌표
+            bottomLeft = pts[np.argmax(diff)]   # x-y가 가장 큰 값이 좌하단 좌표
+
+            # 변환 전 4개 좌표 
+            pts1 = np.float32([topLeft, topRight, bottomRight , bottomLeft])

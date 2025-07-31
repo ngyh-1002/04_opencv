@@ -1,8 +1,11 @@
 import cv2
 import numpy as np
+import datetime
+import os
+
 
 win_name = "License Plate Extractor"
-img = cv2.imread("../img/car_01.jpg")
+img = cv2.imread("../img/car_02.jpg")
 rows, cols = img.shape[:2]
 draw = img.copy()
 pts_cnt = 0
@@ -40,7 +43,49 @@ def onMouse(event, x, y, flags, param):  #마우스 이벤트 콜백 함수 구�
             mtrx = cv2.getPerspectiveTransform(pts1, pts2)
             # 원근 변환 적용
             result = cv2.warpPerspective(img, mtrx, (width, height))
-            cv2.imshow('scanned', result)
+            
+            # 현재 타임스탬프 생성
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # 'extracted_plates' 디렉토리 내에서 현재 타임스탬프와 일치하는 파일들을 찾아서 순번 결정
+            #    (아직 디렉토리가 없다면 생성)
+            output_dir = "../extracted_plates"
+            os.makedirs(output_dir, exist_ok=True) # 디렉토리가 없으면 생성
+            
+            # 현재 타임스탬프를 포함하는 파일 중 가장 높은 순번을 찾습니다.
+            latest_sequence = 0
+            for filename in os.listdir(output_dir):
+                if filename.startswith(f"plate_{timestamp}_") and filename.endswith(".png"):
+                    try:
+                        # 파일명에서 순번 부분만 추출 (예: 001, 002)
+                        seq_str = filename.split('_')[-1].split('.')[0]
+                        current_seq = int(seq_str)
+                        if current_seq > latest_sequence:
+                            latest_sequence = current_seq
+                    except ValueError:
+                        # 순번 부분이 숫자가 아닌 경우 무시
+                        continue
+
+            # 다음 순번 결정 (만약 해당 타임스탬프의 첫 파일이라면 1, 아니면 기존 순번 + 1)
+            next_sequence = latest_sequence + 1
+
+            # 3. 최종 파일명 생성 (예: extracted_plates/plate_20250731_123000_001.jpg)
+            #    순번은 항상 세 자리로 포맷팅합니다 (예: 1 -> 001, 10 -> 010)
+            final_filename = f"{output_dir}/plate_{timestamp}_{next_sequence:03d}.png"
+            
+            # 파일 저장
+
+            success = cv2.imwrite(final_filename, result)
+            if success:
+                print(f"번호판 저장 완료: {final_filename}")
+
+                cv2.imshow('Extracted Plate', result)
+
+            else:
+
+                print("저장 실패!")
+
+
             
 cv2.imshow(win_name, img)
 cv2.setMouseCallback(win_name, onMouse)    # 마우스 콜백 함수를 GUI 윈도우에 등록 ---④
